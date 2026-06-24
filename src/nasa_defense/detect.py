@@ -40,13 +40,17 @@ def detect_sentry(
                 "des": obj.des, "ts_prev": prev["ts_max"], "ts_now": obj.ts_max,
             }))
 
-        if obj.ps_cum - prev["ps_cum"] >= config.PALERMO_STEP and obj.ps_cum >= config.PALERMO_FLOOR:
-            events.append(Event("SENTRY_PALERMO_UP", key, _sev("SENTRY_PALERMO_UP", obj), {
+        if (obj.ps_cum - prev["ps_cum"] >= config.PALERMO_STEP
+                and obj.ps_cum >= config.PALERMO_FLOOR):
+            events.append(Event("SENTRY_PALERMO_UP", key,
+                                _sev("SENTRY_PALERMO_UP", obj), {
                 "des": obj.des, "ps_prev": prev["ps_cum"], "ps_now": obj.ps_cum,
             }))
 
-        if prev["ip"] > 0 and obj.ip >= prev["ip"] * config.IP_JUMP_FACTOR and obj.ip >= config.IP_FLOOR:
-            events.append(Event("SENTRY_IP_JUMP", key, _sev("SENTRY_IP_JUMP", obj), {
+        if (prev["ip"] > 0 and obj.ip >= prev["ip"] * config.IP_JUMP_FACTOR
+                and obj.ip >= config.IP_FLOOR):
+            events.append(Event("SENTRY_IP_JUMP", key,
+                                _sev("SENTRY_IP_JUMP", obj), {
                 "des": obj.des, "ip_prev": prev["ip"], "ip_now": obj.ip,
             }))
 

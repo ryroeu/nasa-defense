@@ -14,6 +14,7 @@ def key_marker(key: str) -> str:
 
 
 class GitHubIssues:
+    """GitHub issue sink for event notifications."""
     def __init__(self, token: str, repo: str, client: httpx.Client | None = None):
         self.repo = repo
         self.client = client or httpx.Client(base_url=API_ROOT, timeout=30.0)

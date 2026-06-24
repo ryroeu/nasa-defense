@@ -11,12 +11,13 @@ def main(argv: list[str] | None = None) -> int:
 
     sink = None
     if not dry_run:
-        from .sinks.github_issues import GitHubIssues
+        from .sinks.github_issues import GitHubIssues  # pylint: disable=import-outside-toplevel
         sink = GitHubIssues.from_env()
 
     try:
         events = watch.run(state_dir=config.STATE_DIR, sink=sink, dry_run=dry_run)
-    except Exception as exc:  # surface red in Actions; state not advanced
+    except Exception as exc:  # pylint: disable=broad-exception-caught
+        # surface red in Actions; state not advanced
         print(f"run failed: {exc}", file=sys.stderr)
         return 1
 

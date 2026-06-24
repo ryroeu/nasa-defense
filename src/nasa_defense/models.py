@@ -14,6 +14,7 @@ def severity_at_least(sev: str, floor: str) -> bool:
 
 @dataclass(frozen=True)
 class SentryObject:
+    """Asteroid or comet object from Sentry."""
     des: str
     ts_max: int
     ps_cum: float
@@ -48,6 +49,7 @@ class SentryObject:
 
 @dataclass(frozen=True)
 class Event:
+    """Event record for change detection."""
     type: str
     key: str
     severity: str
