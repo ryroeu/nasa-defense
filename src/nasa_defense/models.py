@@ -54,3 +54,22 @@ class Event:
     key: str
     severity: str
     payload: dict[str, Any]
+
+
+@dataclass(frozen=True)
+class CloseApproach:
+    """A near-Earth close approach from CNEOS CAD."""
+    des: str
+    cd: str               # calendar date/time, e.g. "2029-Apr-13 21:46"
+    dist_au: float
+    dist_ld: float        # miss distance in lunar distances
+    v_rel_kms: float
+    h: float | None       # absolute magnitude (size proxy)
+
+    def to_state(self) -> dict[str, Any]:
+        return {
+            "dist_au": self.dist_au,
+            "dist_ld": self.dist_ld,
+            "v_rel_kms": self.v_rel_kms,
+            "h": self.h,
+        }

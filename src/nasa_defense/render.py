@@ -13,6 +13,14 @@ def _footer(des: str) -> str:
     return f"[JPL Sentry — {des}]({_sentry_url(des)}) · source: `sentry.api`"
 
 
+def _cad_url(des: str) -> str:
+    return f"https://ssd.jpl.nasa.gov/tools/sbdb_lookup.html#/?sstr={quote(des)}"
+
+
+def _cad_footer(des: str) -> str:
+    return f"[JPL small-body lookup — {des}]({_cad_url(des)}) · source: `cad.api`"
+
+
 def _new(p: dict) -> tuple[str, str]:
     des = p["des"]
     title = f"[☄️ Sentry] {des} entered the impact-risk table"
@@ -95,6 +103,34 @@ def _ip_jump(p: dict) -> tuple[str, str]:
     return title, body
 
 
+def _cad_new_close(p: dict) -> tuple[str, str]:
+    des = p["des"]
+    title = f"[🛰️ Close approach] {des} — {p['dist_ld']:.2f} lunar distances on {p['cd']}"
+    body = (
+        f"**{des}** has a newly-listed close approach: it passes "
+        f"**{p['dist_ld']:.2f} lunar distances** ({p['dist_au']:.4f} au) from Earth on "
+        f"**{p['cd']} UTC** at {p['v_rel_kms']:.1f} km/s.\n\n"
+        f"**What it means:** A catalogued near-Earth object on a safe but notable "
+        f"pass — the closer and larger it is, the more it is worth watching.\n\n"
+        f"{_cad_footer(des)}"
+    )
+    return title, body
+
+
+def _cad_sublunar(p: dict) -> tuple[str, str]:
+    des = p["des"]
+    title = f"[🌙 Close approach] {des} passes inside the Moon's orbit ({p['dist_ld']:.2f} LD)"
+    body = (
+        f"**{des}** passes **{p['dist_ld']:.2f} lunar distances** "
+        f"({p['dist_au']:.4f} au) from Earth on **{p['cd']} UTC**, relative speed "
+        f"{p['v_rel_kms']:.1f} km/s — closer than the Moon.\n\n"
+        f"**What it means:** A sub-lunar pass is uncommon enough to flag every time. "
+        f"For an object this size it is a harmless miss, not a threat.\n\n"
+        f"{_cad_footer(des)}"
+    )
+    return title, body
+
+
 _RENDERERS = {
     "SENTRY_NEW": _new,
     "SENTRY_REMOVED": _removed,
@@ -102,6 +138,8 @@ _RENDERERS = {
     "SENTRY_TORINO_DOWN": _torino_down,
     "SENTRY_PALERMO_UP": _palermo_up,
     "SENTRY_IP_JUMP": _ip_jump,
+    "CAD_NEW_CLOSE": _cad_new_close,
+    "CAD_SUBLUNAR": _cad_sublunar,
 }
 
 

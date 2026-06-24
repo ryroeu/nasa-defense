@@ -3,7 +3,7 @@ from __future__ import annotations
 from typing import Any
 
 from . import config
-from .models import Event, SentryObject
+from .models import CloseApproach, Event, SentryObject
 
 
 def _sev(event_type: str, obj: SentryObject) -> str:
@@ -65,3 +65,49 @@ def detect_sentry(
 
 def sentry_snapshot(current: list[SentryObject]) -> dict[str, dict]:
     return {o.des: o.to_state() for o in current}
+
+
+def cad_severity(approach: CloseApproach) -> str:
+    if approach.dist_ld < 1.0:
+        return "critical"
+    if approach.dist_ld < config.CAD_HIGH_LD or (
+        approach.h is not None and approach.h <= config.CAD_NOTEWORTHY_H_MAX
+    ):
+        return "high"
+    return "info"
+
+
+def _cad_payload(approach: CloseApproach) -> dict[str, Any]:
+    return {
+        "des": approach.des,
+        "cd": approach.cd,
+        "dist_au": approach.dist_au,
+        "dist_ld": approach.dist_ld,
+        "v_rel_kms": approach.v_rel_kms,
+        "h": approach.h,
+    }
+
+
+def detect_cad(
+    previous: dict[str, dict[str, Any]], current: list[CloseApproach]
+) -> list[Event]:
+    events: list[Event] = []
+    for approach in current:
+        state_key = f"{approach.des}:{approach.cd}"
+        if state_key in previous:
+            continue  # already-known pass; never re-alert
+        severity = cad_severity(approach)
+        event_key = f"cad:{approach.des}:{approach.cd}"
+        payload = _cad_payload(approach)
+        if config.CAD_SUBLUNAR_ALWAYS and approach.dist_ld < 1.0:
+            events.append(Event("CAD_SUBLUNAR", event_key, severity, payload))
+        elif approach.dist_ld <= config.CAD_MAX_LUNAR_DISTANCES:
+            events.append(Event("CAD_NEW_CLOSE", event_key, severity, payload))
+    return events
+
+
+def cad_snapshot(current: list[CloseApproach]) -> dict[str, dict]:
+    return {
+        f"{a.des}:{a.cd}": {**a.to_state(), "severity": cad_severity(a)}
+        for a in current
+    }
