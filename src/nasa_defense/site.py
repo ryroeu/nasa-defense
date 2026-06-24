@@ -2,7 +2,7 @@
 from __future__ import annotations
 
 import html
-from datetime import date
+from datetime import date, datetime
 from pathlib import Path
 
 from . import config, state
@@ -34,16 +34,33 @@ def _sentry_rows(sentry: dict) -> str:
     return "".join(rows) or "<tr><td colspan='4' class='muted'>none</td></tr>"
 
 
+def _parse_cad_date(cd: str):
+    for fmt in ("%Y-%b-%d %H:%M", "%Y-%b-%d"):
+        try:
+            return datetime.strptime(cd.strip(), fmt).date()
+        except ValueError:
+            continue
+    return None
+
+
 def _cad_rows(cad: dict) -> str:
-    items = [(key.rsplit(":", 1)[0], d) for key, d in cad.items()]
-    items.sort(key=lambda kv: kv[1].get("dist_ld", 9e9))
+    today = date.today()
+    upcoming = []
+    for key, d in cad.items():
+        des, _, cd = key.partition(":")  # split on the FIRST colon (cd itself contains colons)
+        when = _parse_cad_date(cd)
+        if when is not None and when < today:
+            continue  # already happened — this section is "upcoming" only
+        upcoming.append((when or date.max, des, cd, d))
+    upcoming.sort(key=lambda row: row[0])  # soonest first
     rows = [
-        f"<tr><td>{_esc(des)}</td><td>{d.get('dist_ld', 0.0):.2f} LD</td>"
+        f"<tr><td>{_esc(des)}</td><td>{_esc(cd)}</td>"
+        f"<td>{d.get('dist_ld', 0.0):.2f} LD</td>"
         f"<td>{d.get('v_rel_kms', 0.0):.1f} km/s</td>"
         f"<td class='sev-{_esc(d.get('severity', 'info'))}'>{_esc(d.get('severity', 'info'))}</td></tr>"
-        for des, d in items[:15]
+        for _when, des, cd, d in upcoming[:15]
     ]
-    return "".join(rows) or "<tr><td colspan='4' class='muted'>none</td></tr>"
+    return "".join(rows) or "<tr><td colspan='5' class='muted'>none upcoming</td></tr>"
 
 
 def _fireball_rows(fireballs: dict) -> str:
@@ -75,7 +92,7 @@ def render(state_dir: Path) -> str:
 <table><tr><th>Object</th><th>Torino</th><th>Palermo (cum.)</th><th>Impact prob.</th></tr>
 {_sentry_rows(sentry)}</table>
 <h2>Upcoming close approaches</h2>
-<table><tr><th>Object</th><th>Miss distance</th><th>Speed</th><th>Severity</th></tr>
+<table><tr><th>Object</th><th>Date (UTC)</th><th>Miss distance</th><th>Speed</th><th>Severity</th></tr>
 {_cad_rows(cad)}</table>
 <h2>Recent fireballs</h2>
 <table><tr><th>Date (UTC)</th><th>Impact energy</th></tr>
