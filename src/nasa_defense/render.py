@@ -1,0 +1,114 @@
+from __future__ import annotations
+
+from urllib.parse import quote
+
+from .models import Event
+
+
+def _sentry_url(des: str) -> str:
+    return f"https://cneos.jpl.nasa.gov/sentry/details.html#?des={quote(des)}"
+
+
+def _footer(des: str) -> str:
+    return f"[JPL Sentry — {des}]({_sentry_url(des)}) · source: `sentry.api`"
+
+
+def _new(p: dict) -> tuple[str, str]:
+    des = p["des"]
+    title = f"[☄️ Sentry] {des} entered the impact-risk table"
+    body = (
+        f"**{des}** is now tracked on the CNEOS Sentry impact-risk table.\n\n"
+        f"| Field | Value |\n|---|---|\n"
+        f"| Torino (max) | {p['ts_max']} |\n"
+        f"| Palermo (cum.) | {p['ps_cum']} |\n"
+        f"| Impact probability | {p['ip']:.2e} |\n\n"
+        f"**What it means:** A newly catalogued object cleared the noteworthy "
+        f"floor (size, probability, or risk rating). Most such objects are later "
+        f"ruled out as the orbit is refined.\n\n{_footer(des)}"
+    )
+    return title, body
+
+
+def _removed(p: dict) -> tuple[str, str]:
+    des = p["des"]
+    title = f"[✅ Sentry] {des} removed from the impact-risk table"
+    body = (
+        f"**{des}** is no longer on the Sentry impact-risk table.\n\n"
+        f"**What it means:** A removal almost always means the impact was ruled "
+        f"out by new observations — good news.\n\n{_footer(des)}"
+    )
+    return title, body
+
+
+def _torino_up(p: dict) -> tuple[str, str]:
+    des = p["des"]
+    title = f"[☄️ Sentry] {des} — Torino risk rose to {p['ts_now']}"
+    body = (
+        f"The impact-risk rating for **{des}** increased from Torino "
+        f"**{p['ts_prev']} → {p['ts_now']}**.\n\n"
+        f"| Field | Previous | Now |\n|---|---|---|\n"
+        f"| Torino (max) | {p['ts_prev']} | **{p['ts_now']}** |\n"
+        f"| Palermo (cum.) | {p['ps_prev']} | {p['ps_now']} |\n"
+        f"| Impact probability | {p['ip_prev']:.2e} | {p['ip_now']:.2e} |\n\n"
+        f"**What it means:** A jump off Torino 0 is rare — every other tracked "
+        f"object sits at 0 — so it is worth a look. Further observations usually "
+        f"refine the orbit and the rating falls back.\n\n{_footer(des)}"
+    )
+    return title, body
+
+
+def _torino_down(p: dict) -> tuple[str, str]:
+    des = p["des"]
+    title = f"[☄️ Sentry] {des} — Torino risk fell to {p['ts_now']}"
+    body = (
+        f"The impact-risk rating for **{des}** decreased from Torino "
+        f"**{p['ts_prev']} → {p['ts_now']}**.\n\n"
+        f"**What it means:** De-escalation — the hazard estimate dropped, "
+        f"typically as the orbit was refined.\n\n{_footer(des)}"
+    )
+    return title, body
+
+
+def _palermo_up(p: dict) -> tuple[str, str]:
+    des = p["des"]
+    title = f"[☄️ Sentry] {des} — Palermo scale rose to {p['ps_now']}"
+    body = (
+        f"The cumulative Palermo rating for **{des}** rose from "
+        f"**{p['ps_prev']} → {p['ps_now']}**.\n\n"
+        f"**What it means:** The Palermo scale compares this object's risk to the "
+        f"random background hazard; a rise means it now stands further above "
+        f"background.\n\n{_footer(des)}"
+    )
+    return title, body
+
+
+def _ip_jump(p: dict) -> tuple[str, str]:
+    des = p["des"]
+    title = f"[☄️ Sentry] {des} — impact probability jumped"
+    body = (
+        f"The impact probability for **{des}** rose from "
+        f"**{p['ip_prev']:.2e} → {p['ip_now']:.2e}**.\n\n"
+        f"**What it means:** An order-of-magnitude rise in the computed impact "
+        f"probability — worth tracking, though refinements often reverse it."
+        f"\n\n{_footer(des)}"
+    )
+    return title, body
+
+
+_RENDERERS = {
+    "SENTRY_NEW": _new,
+    "SENTRY_REMOVED": _removed,
+    "SENTRY_TORINO_UP": _torino_up,
+    "SENTRY_TORINO_DOWN": _torino_down,
+    "SENTRY_PALERMO_UP": _palermo_up,
+    "SENTRY_IP_JUMP": _ip_jump,
+}
+
+
+def render(event: Event) -> tuple[str, str]:
+    fn = _RENDERERS.get(event.type)
+    if fn is None:
+        raise ValueError(f"no renderer for event type {event.type!r}")
+    title, body = fn(event.payload)
+    body = f"{body}\n\n<!-- nasa-defense-key: {event.key} -->\n"
+    return title, body
