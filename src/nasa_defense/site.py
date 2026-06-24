@@ -96,8 +96,9 @@ def _cad_rows(cad: dict) -> str:
         upcoming.append((when or date.max, des, cd, d))
     upcoming.sort(key=lambda row: row[0])  # soonest first
     rows = [
-        f"<tr><td>{_esc(des)}</td><td>{_esc(_estimate_size_from_h(d.get('h')))}</td><td>{_esc(cd)}</td>"
+        f"<tr><td>{_esc(des)}</td><td>{_esc(cd)}</td>"
         f"<td>{d.get('dist_ld', 0.0):.2f} LD</td>"
+        f"<td>{_esc(_estimate_size_from_h(d.get('h')))}</td>"
         f"<td>{d.get('v_rel_kms', 0.0):.1f} km/s</td>"
         f"<td class='sev-{_esc(d.get('severity', 'info'))}'>{_esc(d.get('severity', 'info'))}</td></tr>"
         for _when, des, cd, d in upcoming[:15]
@@ -134,7 +135,7 @@ def render(state_dir: Path) -> str:
 <table><tr><th>Object</th><th>Size</th><th>Torino</th><th>Palermo (cum.)</th><th>Impact prob.</th><th>Impact prob. (%)</th></tr>
 {_sentry_rows(sentry)}</table>
 <h2>Upcoming close approaches</h2>
-<table><tr><th>Object</th><th>Size</th><th>Date (UTC)</th><th>Miss distance</th><th>Speed</th><th>Severity</th></tr>
+<table><tr><th>Object</th><th>Date (UTC)</th><th>Miss distance</th><th>Size</th><th>Speed</th><th>Severity</th></tr>
 {_cad_rows(cad)}</table>
 <h2>Recent fireballs</h2>
 <table><tr><th>Date (UTC)</th><th>Impact energy</th></tr>
