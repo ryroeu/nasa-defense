@@ -35,6 +35,23 @@ def _format_size(diameter_km: float | None) -> str:
     return f"~{diameter_km:.1f} km" if metres >= 1000 else f"~{metres:.0f} m"
 
 
+_CAD_ALBEDO = 0.14  # standard assumed NEO geometric albedo (p_v): H=22 -> ~140 m, the PHA threshold
+
+
+def _estimate_size_from_h(h: float | None) -> str:
+    """Estimate a diameter string from absolute magnitude H (a size proxy).
+
+    Close approaches carry no measured diameter, so size is derived from H via
+    D_km = (1329 / sqrt(albedo)) * 10 ** (-0.2 * H), then formatted identically
+    to measured Sentry diameters by delegating to _format_size. Non-real or
+    non-finite H yields the em dash.
+    """
+    if isinstance(h, bool) or not isinstance(h, (int, float)) or not math.isfinite(h):
+        return _format_size(None)
+    diameter_km = 1329 / math.sqrt(_CAD_ALBEDO) * 10 ** (-0.2 * h)
+    return _format_size(diameter_km)
+
+
 def _format_ip_pct(ip: float | None) -> str:
     if (
         isinstance(ip, bool)
@@ -79,13 +96,13 @@ def _cad_rows(cad: dict) -> str:
         upcoming.append((when or date.max, des, cd, d))
     upcoming.sort(key=lambda row: row[0])  # soonest first
     rows = [
-        f"<tr><td>{_esc(des)}</td><td>{_esc(cd)}</td>"
+        f"<tr><td>{_esc(des)}</td><td>{_esc(_estimate_size_from_h(d.get('h')))}</td><td>{_esc(cd)}</td>"
         f"<td>{d.get('dist_ld', 0.0):.2f} LD</td>"
         f"<td>{d.get('v_rel_kms', 0.0):.1f} km/s</td>"
         f"<td class='sev-{_esc(d.get('severity', 'info'))}'>{_esc(d.get('severity', 'info'))}</td></tr>"
         for _when, des, cd, d in upcoming[:15]
     ]
-    return "".join(rows) or "<tr><td colspan='5' class='muted'>none upcoming</td></tr>"
+    return "".join(rows) or "<tr><td colspan='6' class='muted'>none upcoming</td></tr>"
 
 
 def _fireball_rows(fireballs: dict) -> str:
@@ -117,7 +134,7 @@ def render(state_dir: Path) -> str:
 <table><tr><th>Object</th><th>Size</th><th>Torino</th><th>Palermo (cum.)</th><th>Impact prob.</th><th>Impact prob. (%)</th></tr>
 {_sentry_rows(sentry)}</table>
 <h2>Upcoming close approaches</h2>
-<table><tr><th>Object</th><th>Date (UTC)</th><th>Miss distance</th><th>Speed</th><th>Severity</th></tr>
+<table><tr><th>Object</th><th>Size</th><th>Date (UTC)</th><th>Miss distance</th><th>Speed</th><th>Severity</th></tr>
 {_cad_rows(cad)}</table>
 <h2>Recent fireballs</h2>
 <table><tr><th>Date (UTC)</th><th>Impact energy</th></tr>
