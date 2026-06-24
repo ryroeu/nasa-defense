@@ -51,4 +51,25 @@ SCHEMA_VERSION = 1
 
 
 def nasa_api_key() -> str:
-    return os.environ.get("NASA_API_KEY", "DEMO_KEY")
+    key = os.environ.get("NASA_API_KEY")
+    if not key:
+        raise RuntimeError(
+            "NASA_API_KEY is not set — add it to .env (see .env.example) or set it "
+            "in the environment / GitHub Actions secrets."
+        )
+    return key
+
+
+def load_dotenv(path: Path | str = ".env") -> None:
+    """Load `KEY=VALUE` lines from a local .env into the environment for keys not
+    already set (real env vars / CI secrets always win). Convenience for local
+    runs; a no-op when the file is absent."""
+    env_path = Path(path)
+    if not env_path.exists():
+        return
+    for raw in env_path.read_text(encoding="utf-8").splitlines():
+        line = raw.strip()
+        if not line or line.startswith("#") or "=" not in line:
+            continue
+        key, _, value = line.partition("=")
+        os.environ.setdefault(key.strip(), value.strip().strip('"').strip("'"))

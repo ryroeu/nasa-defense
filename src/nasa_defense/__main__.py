@@ -1,11 +1,20 @@
 from __future__ import annotations
 
+import os
 import sys
 
 from . import config, watch
 
 
 def main(argv: list[str] | None = None) -> int:
+    config.load_dotenv()
+    if not os.environ.get("NASA_API_KEY"):
+        print(
+            "error: NASA_API_KEY is required. Add it to .env (see .env.example), "
+            "or set it in the environment / GitHub Actions secrets.",
+            file=sys.stderr,
+        )
+        return 1
     argv = sys.argv[1:] if argv is None else argv
     dry_run = "--dry-run" in argv
 
