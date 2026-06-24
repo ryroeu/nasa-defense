@@ -10,7 +10,10 @@ from .sources import sentry
 
 def labels_for(event: Event) -> list[str]:
     labels = ["planetary-defense", "sentry", f"severity-{event.severity}"]
-    if event.payload.get("ts_now", event.payload.get("ts_max", 0)) and event.severity == "critical":
+    # Label objects currently at Torino >= 1, read from the actual Torino value the
+    # event carries (TORINO_UP/DOWN expose `ts_now`; SENTRY_NEW exposes `ts_max`).
+    current_torino = max(event.payload.get("ts_now", 0), event.payload.get("ts_max", 0))
+    if current_torino >= 1:
         labels.append("torino-ge-1")
     return labels
 
