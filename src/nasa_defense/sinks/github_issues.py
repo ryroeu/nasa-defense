@@ -70,9 +70,10 @@ class GitHubIssues:
             f"/repos/{self.repo}/issues/{number}", headers=self._headers, json=patch
         )
         resp.raise_for_status()
-        self.client.post(
+        comment = self.client.post(
             f"/repos/{self.repo}/issues/{number}/comments",
             headers=self._headers,
             json={"body": "Updated: risk parameters changed (see body)."},
         )
+        comment.raise_for_status()
         return {"action": "updated", "number": number}
