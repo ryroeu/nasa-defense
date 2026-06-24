@@ -6,7 +6,7 @@ from pathlib import Path
 
 from . import config, detect, render, state
 from .models import Event
-from .sources import close_approaches, fireballs, sentry
+from .sources import close_approaches, fireballs, neows, sentry
 
 _BASE_LABEL = "planetary-defense"
 
@@ -53,6 +53,16 @@ def _sources():
     ]
 
 
+def _apply_enrichment(events: list[Event], enrichment: dict) -> None:
+    """Add the NeoWs PHA flag + diameter to any event whose object matches a
+    designation in the enrichment lookup (best-effort; missing keys are fine)."""
+    for event in events:
+        des = event.payload.get("des")
+        if des and des in enrichment:
+            event.payload["pha"] = enrichment[des]["pha"]
+            event.payload["neows_diameter_m"] = enrichment[des].get("diameter_m")
+
+
 def _seed(state_dir: Path, sources) -> None:
     """Cold start: write every source's current snapshot, emit nothing."""
     for filename, fetch_fn, _detect, snapshot_fn, _labels in sources:
@@ -60,7 +70,7 @@ def _seed(state_dir: Path, sources) -> None:
     _save_meta(state_dir)
 
 
-def _process_source(state_dir: Path, source, sink, dry_run: bool) -> tuple[list[Event], bool]:
+def _process_source(state_dir: Path, source, sink, dry_run: bool, enrichment: dict):
     # pylint: disable=too-many-locals
     """Run one source end to end. Returns (events, ok); ok=False means its state
     must NOT advance (so it re-detects next run)."""
@@ -73,6 +83,7 @@ def _process_source(state_dir: Path, source, sink, dry_run: bool) -> tuple[list[
 
     previous = state.load(state_dir / filename)
     events = detect_fn(previous, current)
+    _apply_enrichment(events, enrichment)
 
     try:
         for event in events:
@@ -100,10 +111,11 @@ def run(*, state_dir: Path, sink, dry_run: bool = False) -> list[Event]:
             _seed(state_dir, sources)
         return []
 
+    enrichment = neows.fetch_pha_lookup()  # best-effort; {} on failure
     all_events: list[Event] = []
     failures: list[str] = []
     for source in sources:
-        events, ok = _process_source(state_dir, source, sink, dry_run)
+        events, ok = _process_source(state_dir, source, sink, dry_run, enrichment)
         all_events.extend(events)
         if not ok:
             failures.append(source[0])

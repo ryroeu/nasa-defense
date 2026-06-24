@@ -21,6 +21,16 @@ def _cad_footer(des: str) -> str:
     return f"[JPL small-body lookup — {des}]({_cad_url(des)}) · source: `cad.api`"
 
 
+def _enrichment_line(p: dict) -> str:
+    parts = []
+    if p.get("pha"):
+        parts.append("⚠️ NeoWs flags this a **potentially hazardous asteroid**")
+    diameter = p.get("neows_diameter_m")
+    if diameter:
+        parts.append(f"estimated diameter ~{diameter:.0f} m")
+    return ("\n\n" + " · ".join(parts)) if parts else ""
+
+
 def _new(p: dict) -> tuple[str, str]:
     des = p["des"]
     title = f"[☄️ Sentry] {des} entered the impact-risk table"
@@ -112,7 +122,7 @@ def _cad_new_close(p: dict) -> tuple[str, str]:
         f"**{p['cd']} UTC** at {p['v_rel_kms']:.1f} km/s.\n\n"
         f"**What it means:** A catalogued near-Earth object on a safe but notable "
         f"pass — the closer and larger it is, the more it is worth watching.\n\n"
-        f"{_cad_footer(des)}"
+        f"{_cad_footer(des)}{_enrichment_line(p)}"
     )
     return title, body
 
@@ -126,7 +136,7 @@ def _cad_sublunar(p: dict) -> tuple[str, str]:
         f"{p['v_rel_kms']:.1f} km/s — closer than the Moon.\n\n"
         f"**What it means:** A sub-lunar pass is uncommon enough to flag every time. "
         f"For an object this size it is a harmless miss, not a threat.\n\n"
-        f"{_cad_footer(des)}"
+        f"{_cad_footer(des)}{_enrichment_line(p)}"
     )
     return title, body
 
