@@ -223,3 +223,6 @@ docs/design/
 
 # macOS
 .DS_Store
+
+# Subagent-driven-development scratch (briefs, diffs, ledger)
+.superpowers/
