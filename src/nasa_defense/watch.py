@@ -6,7 +6,7 @@ from pathlib import Path
 
 from . import config, detect, render, state
 from .models import Event
-from .sources import close_approaches, sentry
+from .sources import close_approaches, fireballs, sentry
 
 _BASE_LABEL = "planetary-defense"
 
@@ -28,6 +28,10 @@ def labels_cad(event: Event) -> list[str]:
     return labels
 
 
+def labels_fireball(event: Event) -> list[str]:
+    return [_BASE_LABEL, "fireball", f"severity-{event.severity}"]
+
+
 def _now() -> str:
     return datetime.now(timezone.utc).isoformat()
 
@@ -38,11 +42,14 @@ def _save_meta(state_dir: Path) -> None:
                 "cold_start": False})
 
 
-def _sources(fetch_sentry, fetch_cad):
+def _sources():
     # (state filename, fetch, detect, snapshot, labels)
     return [
-        ("sentry.json", fetch_sentry, detect.detect_sentry, detect.sentry_snapshot, labels_for),
-        ("close_approaches.json", fetch_cad, detect.detect_cad, detect.cad_snapshot, labels_cad),
+        ("sentry.json", sentry.fetch, detect.detect_sentry, detect.sentry_snapshot, labels_for),
+        ("close_approaches.json", close_approaches.fetch, detect.detect_cad,
+         detect.cad_snapshot, labels_cad),
+        ("fireballs.json", fireballs.fetch, detect.detect_fireball,
+         detect.fireball_snapshot, labels_fireball),
     ]
 
 
@@ -83,11 +90,10 @@ def _process_source(state_dir: Path, source, sink, dry_run: bool) -> tuple[list[
     return events, True
 
 
-def run(*, state_dir: Path, sink, dry_run: bool = False,
-        fetch_sentry=sentry.fetch, fetch_cad=close_approaches.fetch) -> list[Event]:
+def run(*, state_dir: Path, sink, dry_run: bool = False) -> list[Event]:
     meta = state.load(state_dir / "meta.json")
     cold = not meta or meta.get("cold_start", True)
-    sources = _sources(fetch_sentry, fetch_cad)
+    sources = _sources()
 
     if cold:
         if not dry_run:

@@ -3,7 +3,7 @@ from __future__ import annotations
 from typing import Any
 
 from . import config
-from .models import CloseApproach, Event, SentryObject
+from .models import CloseApproach, Event, Fireball, SentryObject
 
 
 def _sev(event_type: str, obj: SentryObject) -> str:
@@ -111,3 +111,28 @@ def cad_snapshot(current: list[CloseApproach]) -> dict[str, dict]:
         f"{a.des}:{a.cd}": {**a.to_state(), "severity": cad_severity(a)}
         for a in current
     }
+
+
+def fireball_severity(fireball: Fireball) -> str:
+    return "high" if fireball.impact_e_kt >= config.FIREBALL_HIGH_KT else "info"
+
+
+def detect_fireball(
+    previous: dict[str, dict[str, Any]], current: list[Fireball]
+) -> list[Event]:
+    events: list[Event] = []
+    for fireball in current:
+        if fireball.date in previous:
+            continue  # already seen this bolide
+        if fireball.impact_e_kt < config.FIREBALL_ENERGY_MIN_KT:
+            continue  # below the reporting floor
+        events.append(Event("FIREBALL_NEW", f"fireball:{fireball.date}",
+                            fireball_severity(fireball), {
+            "date": fireball.date, "impact_e_kt": fireball.impact_e_kt,
+            "energy": fireball.energy, "lat": fireball.lat, "lon": fireball.lon,
+        }))
+    return events
+
+
+def fireball_snapshot(current: list[Fireball]) -> dict[str, dict]:
+    return {fb.date: fb.to_state() for fb in current}

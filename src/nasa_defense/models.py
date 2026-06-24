@@ -73,3 +73,21 @@ class CloseApproach:
             "v_rel_kms": self.v_rel_kms,
             "h": self.h,
         }
+
+
+@dataclass(frozen=True)
+class Fireball:
+    """An atmospheric bolide event from CNEOS Fireballs."""
+    date: str               # full timestamp (UTC), unique key
+    impact_e_kt: float      # calculated total impact energy, kilotons
+    energy: float | None    # total radiated energy (x10^10 J)
+    lat: float | None       # signed degrees (N positive, S negative)
+    lon: float | None       # signed degrees (E positive, W negative)
+
+    def to_state(self) -> dict[str, Any]:
+        return {
+            "impact_e_kt": self.impact_e_kt,
+            "energy": self.energy,
+            "lat": self.lat,
+            "lon": self.lon,
+        }

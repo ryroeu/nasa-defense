@@ -131,6 +131,28 @@ def _cad_sublunar(p: dict) -> tuple[str, str]:
     return title, body
 
 
+def _format_location(lat: float | None, lon: float | None) -> str:
+    if lat is None or lon is None:
+        return ""
+    ns = "N" if lat >= 0 else "S"
+    ew = "E" if lon >= 0 else "W"
+    return f" over {abs(lat):.1f}°{ns}, {abs(lon):.1f}°{ew}"
+
+
+def _fireball_new(p: dict) -> tuple[str, str]:
+    energy = p["impact_e_kt"]
+    location = _format_location(p["lat"], p["lon"])
+    title = f"[💥 Fireball] {energy:.2g} kt bolide on {p['date']}"
+    body = (
+        f"A bolide (bright fireball) with an estimated impact energy of "
+        f"**{energy:.2g} kt** was recorded on **{p['date']} UTC**{location}.\n\n"
+        f"**What it means:** Almost all fireballs are small meteoroids burning up "
+        f"harmlessly high in the atmosphere; the energy is the number to watch.\n\n"
+        f"[CNEOS Fireballs](https://cneos.jpl.nasa.gov/fireballs/) · source: `fireball.api`"
+    )
+    return title, body
+
+
 _RENDERERS = {
     "SENTRY_NEW": _new,
     "SENTRY_REMOVED": _removed,
@@ -140,6 +162,7 @@ _RENDERERS = {
     "SENTRY_IP_JUMP": _ip_jump,
     "CAD_NEW_CLOSE": _cad_new_close,
     "CAD_SUBLUNAR": _cad_sublunar,
+    "FIREBALL_NEW": _fireball_new,
 }
 
 
