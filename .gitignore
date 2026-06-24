@@ -216,3 +216,10 @@ __marimo__/
 
 # Streamlit
 .streamlit/secrets.toml
+
+# Project-specific
+# local-only design docs (kept out of version control)
+docs/design/
+
+# macOS
+.DS_Store
