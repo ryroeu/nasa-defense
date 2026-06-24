@@ -48,5 +48,5 @@ def parse(raw: dict) -> list[Fireball]:
 
 def fetch(today: date | None = None) -> list[Fireball]:
     today = today or date.today()
-    params = {"date-min": (today - timedelta(days=config.FETCH_LOOKBACK_DAYS)).isoformat()}
+    params = {"date-min": (today - timedelta(days=config.FIREBALL_LOOKBACK_DAYS)).isoformat()}
     return parse(get_json(config.FIREBALL_API, params=params))

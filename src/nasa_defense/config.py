@@ -24,6 +24,7 @@ FIREBALL_HIGH_KT = 1.0
 
 # --- Fetch windows ---
 FETCH_LOOKBACK_DAYS = 7
+FIREBALL_LOOKBACK_DAYS = 30  # fireball data is published with a multi-week lag
 
 # --- Output ---
 FANOUT_MIN_SEVERITY = "high"
