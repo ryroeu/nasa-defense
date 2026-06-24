@@ -9,14 +9,17 @@ from . import config, state
 from .models import parse_cad_date
 
 _STYLE = """
-body{font-family:system-ui,-apple-system,'Segoe UI',Roboto,sans-serif;max-width:880px;margin:2rem auto;padding:0 1rem;color:#1a1a2e;background:#fafafe;line-height:1.5}
-h1{font-size:1.6rem}h2{margin-top:2rem;border-bottom:1px solid #ddd;padding-bottom:.3rem}
-.hero{background:#0b1d3a;color:#fff;padding:1.2rem 1.4rem;border-radius:10px}
-.hero .days{font-size:2.4rem;font-weight:700;line-height:1.1}
+:root{color-scheme:dark}
+body{font-family:system-ui,-apple-system,'Segoe UI',Roboto,sans-serif;max-width:880px;margin:2rem auto;padding:0 1rem;color:#c9d1d9;background:#0d1117;line-height:1.5}
+h1{font-size:1.6rem;color:#e6edf3}
+h2{margin-top:2rem;border-bottom:1px solid #30363d;padding-bottom:.3rem;color:#e6edf3}
+.hero{background:#11233f;border:1px solid #1f3a5f;color:#e6edf3;padding:1.2rem 1.4rem;border-radius:10px}
+.hero .days{font-size:2.4rem;font-weight:700;line-height:1.1;color:#58a6ff}
 table{border-collapse:collapse;width:100%;font-size:.92rem}
-th,td{text-align:left;padding:.35rem .5rem;border-bottom:1px solid #eee}
-.sev-critical{color:#c0392b;font-weight:700}.sev-high{color:#d35400}.sev-info{color:#888}
-.muted{color:#888;font-size:.85rem}a{color:#1d4ed8}
+th{color:#8b949e}
+th,td{text-align:left;padding:.35rem .5rem;border-bottom:1px solid #21262d}
+.sev-critical{color:#ff7b72;font-weight:700}.sev-high{color:#ffa657}.sev-info{color:#8b949e}
+.muted{color:#8b949e;font-size:.85rem}a{color:#58a6ff}
 """
 
 
@@ -24,15 +27,23 @@ def _esc(value: object) -> str:
     return html.escape(str(value))
 
 
+def _format_size(diameter_km: float | None) -> str:
+    if diameter_km is None:
+        return "—"
+    metres = diameter_km * 1000
+    return f"~{diameter_km:.1f} km" if metres >= 1000 else f"~{metres:.0f} m"
+
+
 def _sentry_rows(sentry: dict) -> str:
     objs = [(des, d) for des, d in sentry.items() if d.get("noteworthy")]
     objs.sort(key=lambda kv: kv[1].get("ps_cum", -99.0), reverse=True)
     rows = [
-        f"<tr><td>{_esc(des)}</td><td>{_esc(d.get('ts_max', 0))}</td>"
+        f"<tr><td>{_esc(des)}</td><td>{_esc(_format_size(d.get('diameter_km')))}</td>"
+        f"<td>{_esc(d.get('ts_max', 0))}</td>"
         f"<td>{_esc(d.get('ps_cum'))}</td><td>{d.get('ip', 0.0):.2e}</td></tr>"
         for des, d in objs[:15]
     ]
-    return "".join(rows) or "<tr><td colspan='4' class='muted'>none</td></tr>"
+    return "".join(rows) or "<tr><td colspan='5' class='muted'>none</td></tr>"
 
 
 def _cad_rows(cad: dict) -> str:
@@ -81,7 +92,7 @@ def render(state_dir: Path) -> str:
 <div class="days">{days} days</div>
 <div>until 2029-04-13 — naked-eye visible (~mag 3), and <strong>not</strong> a threat.</div></div>
 <h2>Sentry — noteworthy impact-risk objects</h2>
-<table><tr><th>Object</th><th>Torino</th><th>Palermo (cum.)</th><th>Impact prob.</th></tr>
+<table><tr><th>Object</th><th>Size</th><th>Torino</th><th>Palermo (cum.)</th><th>Impact prob.</th></tr>
 {_sentry_rows(sentry)}</table>
 <h2>Upcoming close approaches</h2>
 <table><tr><th>Object</th><th>Date (UTC)</th><th>Miss distance</th><th>Speed</th><th>Severity</th></tr>
