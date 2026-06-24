@@ -1,9 +1,10 @@
 from __future__ import annotations
 
+from datetime import date
 from typing import Any
 
 from . import config
-from .models import CloseApproach, Event, Fireball, SentryObject
+from .models import CloseApproach, Event, Fireball, SentryObject, parse_cad_date
 
 
 def _sev(event_type: str, obj: SentryObject) -> str:
@@ -92,7 +93,11 @@ def detect_cad(
     previous: dict[str, dict[str, Any]], current: list[CloseApproach]
 ) -> list[Event]:
     events: list[Event] = []
+    today = date.today()
     for approach in current:
+        approach_date = parse_cad_date(approach.cd)
+        if approach_date is not None and approach_date < today:
+            continue  # already happened — don't alert on past approaches
         state_key = f"{approach.des}:{approach.cd}"
         if state_key in previous:
             continue  # already-known pass; never re-alert

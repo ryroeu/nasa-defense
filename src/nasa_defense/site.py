@@ -2,10 +2,11 @@
 from __future__ import annotations
 
 import html
-from datetime import date, datetime
+from datetime import date
 from pathlib import Path
 
 from . import config, state
+from .models import parse_cad_date
 
 _STYLE = """
 body{font-family:system-ui,-apple-system,'Segoe UI',Roboto,sans-serif;max-width:880px;margin:2rem auto;padding:0 1rem;color:#1a1a2e;background:#fafafe;line-height:1.5}
@@ -34,21 +35,12 @@ def _sentry_rows(sentry: dict) -> str:
     return "".join(rows) or "<tr><td colspan='4' class='muted'>none</td></tr>"
 
 
-def _parse_cad_date(cd: str):
-    for fmt in ("%Y-%b-%d %H:%M", "%Y-%b-%d"):
-        try:
-            return datetime.strptime(cd.strip(), fmt).date()
-        except ValueError:
-            continue
-    return None
-
-
 def _cad_rows(cad: dict) -> str:
     today = date.today()
     upcoming = []
     for key, d in cad.items():
         des, _, cd = key.partition(":")  # split on the FIRST colon (cd itself contains colons)
-        when = _parse_cad_date(cd)
+        when = parse_cad_date(cd)
         if when is not None and when < today:
             continue  # already happened — this section is "upcoming" only
         upcoming.append((when or date.max, des, cd, d))

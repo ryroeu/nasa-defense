@@ -1,6 +1,7 @@
 from __future__ import annotations
 
 from dataclasses import dataclass
+from datetime import date, datetime
 from typing import Any
 
 from . import config
@@ -10,6 +11,16 @@ SEVERITY_RANK = {"info": 0, "high": 1, "critical": 2}
 
 def severity_at_least(sev: str, floor: str) -> bool:
     return SEVERITY_RANK[sev] >= SEVERITY_RANK[floor]
+
+
+def parse_cad_date(cd: str) -> date | None:
+    """Parse a CNEOS CAD calendar-date string (e.g. '2029-Apr-13 21:46') to a date."""
+    for fmt in ("%Y-%b-%d %H:%M", "%Y-%b-%d"):
+        try:
+            return datetime.strptime(cd.strip(), fmt).date()
+        except ValueError:
+            continue
+    return None
 
 
 @dataclass(frozen=True)
