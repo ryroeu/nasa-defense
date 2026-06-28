@@ -3932,7 +3932,7 @@
     "ip": 4.23257e-07,
     "last_obs": "2015-06-24",
     "noteworthy": false,
-    "ps_cum": -5.93,
+    "ps_cum": -5.92,
     "ts_max": 0
   },
   "2015 ND3": {
@@ -3940,7 +3940,7 @@
     "ip": 1.302e-08,
     "last_obs": "2015-08-13",
     "noteworthy": false,
-    "ps_cum": -8.76,
+    "ps_cum": -8.75,
     "ts_max": 0
   },
   "2015 PS228": {
@@ -17209,10 +17209,10 @@
   },
   "2026 MD": {
     "diameter_km": 0.041,
-    "ip": 2.3229e-07,
+    "ip": 3.33065e-07,
     "last_obs": "2026-06-26",
     "noteworthy": false,
-    "ps_cum": -6.74,
+    "ps_cum": -6.58,
     "ts_max": 0
   },
   "2026 MD1": {
@@ -17233,15 +17233,15 @@
   },
   "2026 MJ1": {
     "diameter_km": 0.012,
-    "ip": 6.54915023e-05,
-    "last_obs": "2026-06-23",
+    "ip": 7.61163935e-05,
+    "last_obs": "2026-06-26",
     "noteworthy": false,
-    "ps_cum": -5.63,
+    "ps_cum": -5.56,
     "ts_max": 0
   },
   "2026 MP1": {
-    "diameter_km": 0.097,
-    "ip": 7.07905e-07,
+    "diameter_km": 0.096,
+    "ip": 7.427176e-07,
     "last_obs": "2026-06-26",
     "noteworthy": false,
     "ps_cum": -4.96,
@@ -17268,7 +17268,7 @@
     "ip": 1.421e-05,
     "last_obs": "2026-06-23",
     "noteworthy": false,
-    "ps_cum": -6.24,
+    "ps_cum": -6.22,
     "ts_max": 0
   },
   "2026 MY1": {
